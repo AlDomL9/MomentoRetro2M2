@@ -24,12 +24,15 @@ from sklearn.preprocessing import StandardScaler
 #-----------------------------Variables Globales-------------------------------
 
 #------------------------------------Main--------------------------------------
-def train (X, Y, train_size = 0.8, random_state_split = None, shuffle = True, 
-           stratify = None, penalty = "l2", dual = False, tol = 0.001, C = 1.0, 
-           fit_intercept = True, intercept_scaling = 1, class_weight = None, 
-           random_state_regression = None, solver = "lbfgs", max_iter = 100, 
-           multi_class = "auto", verbose = 0, warm_start = False, 
-           n_jobs = None,l1_ratio = None):
+def train (X, Y, num_params = 1, train_size = 0.8, random_state_split = None, 
+           shuffle = True, stratify = None, penalty = "l2", dual = False, 
+           tol = 0.001, C = 1.0, fit_intercept = True, intercept_scaling = 1, 
+           class_weight = None, random_state_regression = None, 
+           solver = "lbfgs", max_iter = 100, multi_class = "auto", verbose = 0, 
+           warm_start = False, n_jobs = None,l1_ratio = None):
+    
+    if (num_params == 1):
+        X = np.reshape(X, (len(X), 1))
     
     print("Escalando datos")
     scaler = StandardScaler(copy = False)
@@ -38,9 +41,9 @@ def train (X, Y, train_size = 0.8, random_state_split = None, shuffle = True,
     print("Varianza encontrada: ", scaler.var_)
     
     print("Dividiendo datos en train y test")
-    xTrain, yTrain, xTest, yTest = train_test_split(X, Y, 
+    xTrain, xTest, yTrain, yTest = train_test_split(X, Y, 
                                                     train_size = train_size,
-                                                    random_state_split = 
+                                                    random_state = 
                                                     random_state_split,
                                                     shuffle = shuffle,
                                                     stratify = stratify)
@@ -55,6 +58,8 @@ def train (X, Y, train_size = 0.8, random_state_split = None, shuffle = True,
                                multi_class = multi_class, verbose = verbose,
                                warm_start = warm_start, n_jobs = n_jobs,
                                l1_ratio = l1_ratio)
+    
+    print(X)
     
     print("Entrenando")
     model.fit(xTrain, yTrain)
@@ -77,8 +82,8 @@ def train (X, Y, train_size = 0.8, random_state_split = None, shuffle = True,
     ax.xaxis.set(ticks=(0, 1), ticklabels=('Predicted 0s', 'Predicted 1s'))
     ax.yaxis.set(ticks=(0, 1), ticklabels=('Actual 0s', 'Actual 1s'))
     ax.set_ylim(1.5, -0.5)
-    for i in range(2):
-        for j in range(2):
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
             ax.text(j, i, cm[i, j], ha='center', va='center', color='white')
     plt.show()
     
@@ -88,4 +93,131 @@ def train (X, Y, train_size = 0.8, random_state_split = None, shuffle = True,
     return model
 
 #-----------------------------------Pruebas------------------------------------
-df = pd.read_csv("/home/lex/Escritorio/MomentoRetroM2/MomentoRetro2M2/iris.csv")
+df= pd.read_csv("./Data/iris.csv")
+df.drop(axis = 1, columns = "x0", inplace = True)
+df.columns = ["sepal_length", "sepal_width", "petal_length", "petal_width",
+              "species"]
+
+xP = [[-1.90], [-1.002], [0.03], [1.03], [2]]
+x2P = [[-1.90, -2], [-1.002, -0.98], [0.03, 0.1], [1.03, 0.80], [2, 1.80]]
+
+
+#__________________________________Prueba 1____________________________________
+df.replace(to_replace = "Iris-setosa", value = "Setosa", inplace = True)
+df.replace(to_replace = "Iris-versicolor", value = "NoSetosa", inplace = True)
+df.replace(to_replace = "Iris-virginica", value = "NoSetosa", inplace = True)
+
+
+
+Y = df["species"].values
+X = df["petal_length"].valuessss
+model1 = train(X, Y)
+
+yP = model1.predict(xP)
+
+legends = ["Registros", "Predicciones"]
+fig, ax = plt.subplots()
+plt.scatter(X, Y, color = "#67CD32", marker = "H")
+plt.scatter(xP, yP, color = "#9832CD", marker = "D")
+ax.set_xlabel("Largo de petalo (escalado)")
+ax.set_ylabel("Especie")
+ax.set_title("Setosa si largo de petalo")
+ax.legend(legends)
+plt.show()
+
+
+#__________________________________Prueba 2____________________________________
+Y = df["species"].values
+X = df[["petal_width","petal_length"]].values
+model2 = train(X, Y, num_params = 2)
+
+y2P = model2.predict(x2P)
+
+legends = ["Registros", "Predicciones"]
+fig, ax = plt.subplots()
+plt.scatter(X[:, 0], Y, color = "#2C72D3", marker = "H")
+plt.scatter([fila[0] for fila in x2P], y2P, color = "#D38D2C", marker = "D")
+ax.set_xlabel("Ancho de petalo (escalado)")
+ax.set_ylabel("Especie")
+ax.set_title("Setosa si ancho de petalo")
+ax.legend(legends)
+plt.show()
+
+
+#__________________________________Prueba 3____________________________________
+Y = df["species"].values
+X = df[["sepal_width", "sepal_length"]].values
+model3 = train(X, Y, num_params = 2)
+
+y2P = model3.predict(x2P)
+
+legends = ["Registros", "Predicciones"]
+fig, ax = plt.subplots()
+plt.scatter(X[:, 0], Y, color = "#16E956", marker = "H")
+plt.scatter([fila[0] for fila in x2P], y2P, color = "#E916A9", marker = "D")
+ax.set_xlabel("Ancho de sepalo (escalado)")
+ax.set_ylabel("Especie")
+ax.set_title("Setosa si ancho de sepalo")
+ax.legend(legends)
+plt.show()
+
+legends = ["Registros", "Predicciones"]
+fig, ax = plt.subplots()
+plt.scatter(X[:, 1], Y, color = "#21CBDE", marker = "H")
+plt.scatter([fila[1] for fila in x2P], y2P, color = "#DE3421", marker = "D")
+ax.set_xlabel("Largo de sepalo (escalado)")
+ax.set_ylabel("Especie")
+ax.set_title("Setosa si largo de sepalo")
+ax.legend(legends)
+plt.show()
+
+#__________________________________Prueba 4____________________________________
+model4 = train(df[["sepal_width"]], Y, num_params = 2)
+
+#__________________________________Prueba 5____________________________________
+model5 = train(df[["petal_width", "petal_length", "sepal_width", 
+                   "sepal_length"]], Y, num_params = 2)
+
+#__________________________________Prueba 6____________________________________
+model6 = train(df[["sepal_width", "sepal_length"]], Y, num_params = 2, 
+               train_size = 0.85, random_state_split = 42, penalty = "l1",
+               C = 0.8, random_state_regression = 42, solver = "liblinear",
+               max_iter = 200, n_jobs = -1)
+
+#__________________________________Prueba 7____________________________________
+model7 = train(df[["sepal_width", "sepal_length"]], Y, num_params = 2, 
+               train_size = 0.70, random_state_split = 42, 
+               penalty = "elasticnet", class_weight = "balanced", 
+               C = 0.8, random_state_regression = 42, solver = "saga",
+               max_iter = 200, warm_start = True, n_jobs = -1,
+               l1_ratio = 0.8)
+
+#__________________________________Prueba 8____________________________________
+model8 = train(df[["sepal_width", "sepal_length"]], Y, num_params = 2, 
+               train_size = 0.4, shuffle = False, random_state_split = 42, 
+               penalty = "none", class_weight = "sepal_width", C = 1, 
+               random_state_regression = 42, solver = "sag", max_iter = 1, 
+               warm_start = True, n_jobs = -1)
+
+#__________________________________Prueba 9____________________________________
+df= pd.read_csv("./Data/iris.csv")
+df.drop(axis = 1, columns = "x0", inplace = True)
+df.columns = ["sepal_length", "sepal_width", "petal_length", "petal_width",
+              "species"]
+
+Y = df["species"].values
+X = df["petal_width"].values
+
+model9 = train(X, Y)
+
+yP = model9.predict(xP)
+
+legends = ["Registros", "Predicciones"]
+fig, ax = plt.subplots()
+plt.scatter(X, Y, color = "#17A1E8", marker = "H")
+plt.scatter(xP, yP, color = "#E85E17", marker = "D")
+ax.set_xlabel("Largo de petalo (escalado)")
+ax.set_ylabel("Especie")
+ax.set_title("Especie si largo de petalo")
+ax.legend(legends)
+plt.show()
